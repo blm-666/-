@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>虚拟产能计算器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 15px;
+        }
+        
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+        
+        .input-section {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .workshop-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .production-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .model-selector {
+            grid-column: 1 / -1;
+            margin-top: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .results-section {
+            padding: 15px;
+        }
+        
+        .result-tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        
+        .result-table th, .result-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+        
+        .result-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .result-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .workshop-name {
+            text-align: left;
+            font-weight: 500;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+        
+        .calculation-details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        
+        .calculation-details h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .calculation-details p {
+            margin-bottom: 5px;
+        }
+        
+        .negative {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 500px) {
+            .workshop-inputs, .production-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .result-table {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>虚拟产能计算器</h1>
+        </header>
+        
+        <div class="input-section">
+            <h3>请假人数</h3>
+            <div class="workshop-inputs">
+                <div class="input-group">
+                    <label for="zj-leave">制件车间请假人数</label>
+                    <input type="number" id="zj-leave" min="0" step="any" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="hj-leave">焊装车间请假人数</label>
+                    <input type="number" id="hj-leave" min="0" step="any" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="tz-leave">涂装车间请假人数</label>
+                    <input type="number" id="tz-leave" min="0" step="any" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="zz-leave">总装车间请假人数</label>
+                    <input type="number" id="zz-leave" min="0" step="any" value="0">
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 20px;">实际生产数量</h3>
+            <div class="production-inputs">
+                <div class="input-group">
+                    <label for="ev-plan">低速电车生产数量</label>
+                    <input type="number" id="ev-plan" min="0" step="any" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="bus-plan">客车生产数量</label>
+                    <input type="number" id="bus-plan" min="0" step="any" value="0">
+                </div>
+            </div>
+            
+            <div class="input-group model-selector">
+                <label for="bus-model">选择基准车型</label>
+                <select id="bus-model">
+                    <option value="华意中巴(Y59C)">华意中巴(Y59C)</option>
+                    <option value="5.8米校车(S58A)">5.8米校车(S58A)</option>
+                    <option value="7.4米校车(S75A)">7.4米校车(S75A)</option>
+                    <option value="7.4米校车(S75B)">7.4米校车(S75B)</option>
+                    <option value="仿考(Y70A)">仿考(Y70A)</option>
+                    <option value="6.6米华贸(Y66A)">6.6米华贸(Y66A)</option>
+                    <option value="6.3米华贸(Y63A)">6.3米华贸(Y63A)</option>
+                </select>
+            </div>
+            
+            <button id="calculate-btn" class="btn">计算虚拟产能</button>
+        </div>
+        
+        <div class="results-section">
+            <div class="result-tabs">
+                <div class="tab active" data-tab="virtual">虚拟产能</div>
+                <div class="tab" data-tab="details">计算详情</div>
+            </div>
+            
+            <div id="virtual-results" class="tab-content active">
+                <table class="result-table">
+                    <thead>
+                        <tr>
+                            <th>车间</th>
+                            <th>虚拟产能</th>
+                        </tr>
+                    </thead>
+                    <tbody id="virtual-results-body">
+                        <tr>
+                            <td colspan="2" class="no-data">请输入数据并点击计算</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="details-results" class="tab-content">
+                <div class="calculation-details">
+                    <p>这里将显示详细的车间计算过程...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 基础数据
+        const baseData = {
+            total: { zj: 33, hj: 49, tz: 51, zz: 61 },
+            leaders: { zj: 2, hj: 1, tz: 2, zz: 2 },
+            // 车型工时数据
+            workHours: {
+                // 客车车型
+                "华意中巴(Y59C)": { zj: 4669, hj: 4860, tz: 5223, zz: 5928 },
+                "5.8米校车(S58A)": { zj: 4435, hj: 4617, tz: 5223, zz: 5748 },
+                "7.4米校车(S75A)": { zj: 4902, hj: 5346, tz: 6054, zz: 6052 },
+                "7.4米校车(S75B)": { zj: 4902, hj: 5346, tz: 6054, zz: 6052 },
+                "仿考(Y70A)": { zj: 3575, hj: 6318, tz: 6052, zz: 6285 },
+                "6.6米华贸(Y66A)": { zj: 3750, hj: 4880, tz: 5425, zz: 5700 },
+                "6.3米华贸(Y63A)": { zj: 3715, hj: 4750, tz: 5325, zz: 5635 },
+                // 低速电车
+                "低速电车(代工)": { zj: 163, hj: 1076, tz: 719, zz: 897 }
+            }
+        };
+
+        // 计算实际参与生产人数
+        function calculateActualWorkers(leaveCounts) {
+            const actual = {};
+            for (const workshop in baseData.total) {
+                actual[workshop] = baseData.total[workshop] - baseData.leaders[workshop] - leaveCounts[workshop];
+            }
+            return actual;
+        }
+
+        // 计算虚拟产能
+        function calculateVirtualVehicles(actualWorkers, evPlan, busPlan, baseModel) {
+            const results = {};
+            const details = {};
+            
+            for (const workshop in baseData.total) {
+                // 计算实际可用工时
+                const availableMinutes = actualWorkers[workshop] * 8 * 60 * 0.8;
+                
+                // 计算低速电车所需工时
+                const evHoursPerUnit = baseData.workHours["低速电车(代工)"][workshop];
+                const evTotalMinutes = evPlan * evHoursPerUnit;
+                
+                // 计算客车所需工时
+                const busHoursPerUnit = baseData.workHours[baseModel][workshop];
+                const busTotalMinutes = busPlan * busHoursPerUnit;
+                
+                // 计算剩余工时
+                const remainingMinutes = availableMinutes - evTotalMinutes - busTotalMinutes;
+                
+                // 计算虚拟产能
+                const virtualVehicles = remainingMinutes / busHoursPerUnit;
+                
+                results[workshop] = virtualVehicles;
+                
+                // 保存计算详情
+                details[workshop] = {
+                    availableMinutes,
+                    evTotalMinutes,
+                    busTotalMinutes,
+                    remainingMinutes,
+                    busHoursPerUnit,
+                    virtualVehicles,
+                    baseModel
+                };
+            }
+            
+            return { results, details };
+        }
+
+        // 更新结果显示
+        function updateResults(virtualResults, calculationDetails) {
+            // 更新虚拟产能
+            const virtualResultsBody = document.getElementById('virtual-results-body');
+            virtualResultsBody.innerHTML = '';
+            
+            for (const workshop in virtualResults) {
+                const row = document.createElement('tr');
+                const workshopName = getWorkshopName(workshop);
+                const virtualValue = virtualResults[workshop];
+                const cellClass = virtualValue < 0 ? 'negative' : '';
+                
+                row.innerHTML = `
+                    <td class="workshop-name">${workshopName}</td>
+                    <td class="${cellClass}">${virtualValue.toFixed(2)}</td>
+                `;
+                virtualResultsBody.appendChild(row);
+            }
+            
+            // 更新计算详情
+            const detailsContainer = document.querySelector('.calculation-details');
+            detailsContainer.innerHTML = '<h3>计算详情</h3>';
+            
+            for (const workshop in calculationDetails) {
+                const detail = calculationDetails[workshop];
+                const workshopName = getWorkshopName(workshop);
+                
+                const detailDiv = document.createElement('div');
+                detailDiv.style.marginBottom = '15px';
+                detailDiv.style.padding = '10px';
+                detailDiv.style.backgroundColor = 'white';
+                detailDiv.style.borderRadius = '5px';
+                
+                detailDiv.innerHTML = `
+                    <h4>${workshopName}车间</h4>
+                    <p>实际可用工时: ${detail.availableMinutes.toFixed(2)} 分钟</p>
+                    <p>低速电车所需工时: ${detail.evTotalMinutes.toFixed(2)} 分钟</p>
+                    <p>客车所需工时: ${detail.busTotalMinutes.toFixed(2)} 分钟</p>
+                    <p>剩余工时: ${detail.remainingMinutes.toFixed(2)} 分钟</p>
+                    <p>${detail.baseModel}单车工时: ${detail.busHoursPerUnit} 分钟</p>
+                    <p><strong>虚拟产能: ${detail.virtualVehicles.toFixed(2)}</strong></p>
+                `;
+                
+                detailsContainer.appendChild(detailDiv);
+            }
+        }
+
+        // 获取车间中文名称
+        function getWorkshopName(workshop) {
+            const names = {
+                zj: '制件',
+                hj: '焊装',
+                tz: '涂装',
+                zz: '总装'
+            };
+            return names[workshop] || workshop;
+        }
+
+        // 事件监听
+        document.getElementById('calculate-btn').addEventListener('click', function() {
+            // 获取请假人数
+            const leaveCounts = {
+                zj: parseFloat(document.getElementById('zj-leave').value) || 0,
+                hj: parseFloat(document.getElementById('hj-leave').value) || 0,
+                tz: parseFloat(document.getElementById('tz-leave').value) || 0,
+                zz: parseFloat(document.getElementById('zz-leave').value) || 0
+            };
+            
+            // 获取实际生产数量
+            const evPlan = parseFloat(document.getElementById('ev-plan').value) || 0;
+            const busPlan = parseFloat(document.getElementById('bus-plan').value) || 0;
+            
+            // 获取基准车型
+            const baseModel = document.getElementById('bus-model').value;
+            
+            // 计算实际参与生产人数
+            const actualWorkers = calculateActualWorkers(leaveCounts);
+            
+            // 计算虚拟产能
+            const { results, details } = calculateVirtualVehicles(actualWorkers, evPlan, busPlan, baseModel);
+            
+            // 更新结果显示
+            updateResults(results, details);
+        });
+
+        // 标签切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // 移除所有active类
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // 添加active类到当前标签和内容
+                this.classList.add('active');
+                document.getElementById(`${this.dataset.tab}-results`).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
